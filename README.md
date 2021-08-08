@@ -13,7 +13,7 @@ Regarding the way to connect the 3.5 - 5Vdc passive buzzer, the ESP12 can drive 
 
 
 ### Morse standard used
-The time of the dah is 3 times of the dit, the separation time between dit and/or dah is 1 dit time, the time separation betwenn letters/numbers/special chars is 1 dah (3xdit), the time separation between words is 7xdit. The dit time in ms is = 1200/wpm and ranger from 240ms / 5wpm to 40ms / 30wpm.
+The time of the dah is 3 times of the dit, the separation time between dit and/or dah is 1 dit time, the time separation betwenn letters/numbers/special chars is 1 dah (3xdit), the time separation between words is 7xdit. The dit time in ms is = 1200/wpm and ranges from 240ms / 5wpm to 40ms / 30wpm.
 
 
 ### How the morse keyer works
