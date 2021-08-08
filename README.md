@@ -12,6 +12,10 @@ The transmit speed can be set at various speed such as 5,10,15,20,25,30 WPM. The
 Regarding the way to connect the 3.5 - 5Vdc passive buzzer, the ESP12 can drive it directly without the need of a intermediate transistor buffer; so I did and it works nicely. I did not try a ESP3 to see if also its PIO pins can drive the passive buzzer as well.
 
 
+### Morse standard used
+The time of the dah is 3 times of the dit, the separation time between dit and/or dah is 1 dit time, the time separation betwenn letters/numbers/specia chars is 1 dah (3xdit), the time separation between words is 7*dit. The dit time in mS is = 1200/wpm and ranges from 240ms / 5wpm to 40ms / 30wpm.
+
+
 ### How the morse keyer works
 After completing the boot, the Arduino sketch connects the local WiFi network by its SSID name and password then it detects the local ip assigned by the router and shows it in the serial monitor then plays its morse code on the buzzer at 15wpm speed. This is done to face the case where the ESP12 is not connected to the PC serial interface and since the user must know the TCP host IP address to be inserted in the Putty client (or whatever Telnet client is chosed), then playing its morse code by the buzzer I thought it was a good idea.
 
