@@ -23,6 +23,13 @@ String wpm15 = "15WPM\r\n";
 String wpm20 = "20WPM\r\n";
 String wpm25 = "25WPM\r\n";
 String wpm30 = "30WPM\r\n";
+String t400 = "400\r\n";
+String t500 = "500\r\n";
+String t600 = "600\r\n";
+String t700 = "700\r\n";
+String t800 = "800\r\n";
+String t900 = "900\r\n";
+
 char alfanum[] = {'A','B','C','D','E','F','G','H','I','J','K','L',
                   'M','N','O','P','Q','R','S','T','U','V','W','X',
                   'Y','Z','1','2','3','4','5','6','7','8','9','0',
@@ -41,7 +48,7 @@ String codes[] = {String("13"),String("3111"),String("3131"),String("311"),Strin
                   String("131131")};
 char inbuf[2048];
 int tbit = 80;  // ms tempo di bit per 15wpm, 60 per 20wpm, 48 per 25wpm 40 per 30wpm
-
+int nota = 800; // tono buzzer 800Hz
 void setup() 
 {
   Serial.begin(115200);
@@ -127,6 +134,30 @@ void loop()
           tbit = 40;
           Serial.println("Set speed 30wpm");  
         }
+        else if(t400.compareTo(s) == 0) {
+          nota = 400;
+          Serial.println("Set tone at 400Hz");  
+        }
+        else if(t500.compareTo(s) == 0) {
+          nota = 500;
+          Serial.println("Set tone at 500Hz");  
+        }
+        else if(t600.compareTo(s) == 0) {
+          nota = 600;
+          Serial.println("Set tone at 600Hz");  
+        }
+        else if(t700.compareTo(s) == 0) {
+          nota = 700;
+          Serial.println("Set tone at 700Hz");  
+        }
+        else if(t800.compareTo(s) == 0) {
+          nota = 800;
+          Serial.println("Set tone at 800Hz");  
+        }
+        else if(t900.compareTo(s) == 0) {
+          nota = 900;
+          Serial.println("Set tone at 900Hz");  
+        }
         else {
           Serial.println("Vado a trasmettere in morse..");
           findMorse(s, tbit);
@@ -146,7 +177,7 @@ void playmorse(String x, int tbit) {
   int c;
   for(int i=0;i<x.length();i++) {
     c = (int)(x.charAt(i) - 48)*tbit; 
-    tone(4,800);      // suono 800hz su io4
+    tone(4,nota);      // suono su io4
     digitalWrite(2, LOW);
     delay(c);
     noTone(4);        // cessa suono su io4
