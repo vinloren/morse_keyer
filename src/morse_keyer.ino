@@ -93,7 +93,30 @@ void loop()
     if(client.connected())
     {
       Serial.println("Client Connected");
-      client.write("Velocità di base: 15wpm\r\ninput 20wpm/25wpm/30wpm per cambiare velocità\r\naltrimenti testo da trasmettere in morse\r\n");
+      char* speed = "";
+      switch (tbit) {
+        case 240:
+          speed = "5wpm";
+          break;
+        case 120:
+          speed = "10wpm";
+          break;
+        case 80:
+          speed = "15wpm";
+          break;
+        case 60:
+          speed = "20wpm";
+          break;
+        case 48: 
+          speed = "25wpm";
+          break;
+        case 40:
+          speed = "30wpm";
+          break;
+      }
+      char buf[80];
+      sprintf(buf,"Velocità morse %s nota at %dHz.",speed,nota);
+      client.write(buf);
     }
     
     while(client.connected()){      
