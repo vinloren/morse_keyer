@@ -15,7 +15,7 @@ The note tone is set by default at 800Hz but it can be changed to 400,500,600,70
 
 
 ### Morse standard used
-The time of the dah is 3 times of the dit, the separation time between dit and/or dah is 1 dit time, the time separation betwenn letters/numbers/special chars is 1 dah (3xdit), the time separation between words is 7xdit. The dit time in ms is = 1200/wpm and ranges from 240ms / 5wpm to 40ms / 30wpm.
+The time of the dah is 3 times of the dit, the separation time between dit and/or dah is 1 dit time, the time separation betwenn letters/numbers/special chars is 1 dah (3xdit), the time separation between words is 7xdit. The dit time in ms is = 1200/wpm and ranges from 240ms / 5wpm to 40ms / 30wpm. These space timings can be set doubled upon request via command received from companion client (morse_trainer.py).
 
 
 ### How the morse keyer works

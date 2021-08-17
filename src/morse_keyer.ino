@@ -29,6 +29,8 @@ String t600 = "600\r\n";
 String t700 = "700\r\n";
 String t800 = "800\r\n";
 String t900 = "900\r\n";
+String sp1 = "CHARSPACE1\r\n";
+String sp2 = "CHARSPACE2\r\n";
 
 char alfanum[] = {'A','B','C','D','E','F','G','H','I','J','K','L',
                   'M','N','O','P','Q','R','S','T','U','V','W','X',
@@ -49,6 +51,7 @@ String codes[] = {String("13"),String("3111"),String("3131"),String("311"),Strin
 char inbuf[2048];
 int tbit = 80;  // ms tempo di bit per 15wpm, 60 per 20wpm, 48 per 25wpm 40 per 30wpm
 int nota = 800; // tono buzzer 800Hz
+int spchr = 1;  // spazi fra dit / dah nei caratteri
 void setup() 
 {
   Serial.begin(115200);
@@ -181,6 +184,14 @@ void loop()
           nota = 900;
           Serial.println("Set tone at 900Hz");  
         }
+        else if(sp1.compareTo(s) == 0) {
+          spchr = 1;  
+          Serial.println("Singolo spazio dit/dah");   
+        }
+        else if(sp2.compareTo(s) == 0) {
+          spchr = 2;  
+          Serial.println("Doppio spazio dit/dah");   
+        }
         else {
           Serial.println("Vado a trasmettere in morse..");
           findMorse(s, tbit);
@@ -205,9 +216,9 @@ void playmorse(String x, int tbit) {
     delay(c);
     noTone(4);        // cessa suono su io4
     digitalWrite(2, HIGH);
-    delay(tbit);  // ritardo spazio fra punti e linee
+    delay(tbit*spchr);  // ritardo spazio fra punti e linee
   }
-  delay(2*tbit); // ritardo spazio fra caratteri
+  delay(2*tbit*spchr);  // ritardo spazio fra caratteri
 }
 
 
@@ -216,7 +227,7 @@ void findMorse (String s, int tbit) {
   int j;
   while(s.charAt(i) != '\r') {
       if(s.charAt(i) == ' ') {
-         delay(4*tbit);    // se blank spazia ritardo fra parole
+         delay(4*tbit*spchr);    // se blank spazia ritardo fra parole
       }
       else {
          for(j=0;j<sizeof(alfanum);j++) {
@@ -227,7 +238,7 @@ void findMorse (String s, int tbit) {
            playmorse(codes[j],tbit);
          }
          else {
-           delay(4*tbit); // carattere non previsto, trattalo come spazio
+           delay(4*tbit*spchr); // carattere non previsto, trattalo come spazio
          }
      }
      i++;
