@@ -8,6 +8,13 @@
 */
 
 #include <ESP8266WiFi.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define OLED_SDA 4
+#define OLED_SCL 5
+Adafruit_SSD1306 display(128, 32, &Wire, -1);
 
 int port = 8888;  //Port number
 WiFiServer server(port);
@@ -32,6 +39,8 @@ String t900 = "900\r\n";
 String sp1 = "CHARSPACE1\r\n";
 String sp2 = "CHARSPACE2\r\n";
 
+#define tonePin 14
+
 char alfanum[] = {'A','B','C','D','E','F','G','H','I','J','K','L',
                   'M','N','O','P','Q','R','S','T','U','V','W','X',
                   'Y','Z','1','2','3','4','5','6','7','8','9','0',
@@ -49,9 +58,46 @@ String codes[] = {String("13"),String("3111"),String("3131"),String("311"),Strin
                   String("333111"),String("313131"),String("311113"),String("13131"),
                   String("131131")};
 char inbuf[2048];
+char rcvBuf[32] = {0};
+int bytecount = 5;
 int tbit = 80;  // ms tempo di bit per 15wpm, 60 per 20wpm, 48 per 25wpm 40 per 30wpm
 int nota = 800; // tono buzzer 800Hz
 int spchr = 1;  // spazi fra dit / dah nei caratteri
+
+void showOled(char* s) {
+  display.clearDisplay();
+  display.setTextSize(2); 
+  display.setTextColor(WHITE);
+  display.setCursor(0, 0);
+  display.println(s);
+  display.display();  
+}
+
+// show sliding data to oled from rcvBuf
+void showData() {
+  if(bytecount > 20){
+    for(int i=0;i<20;i++)
+      rcvBuf[i] = rcvBuf[i+1];
+    bytecount--;
+  }
+  rcvBuf[20] = 0;
+  showOled(rcvBuf);
+}
+
+void showMorseData(char c) {
+  rcvBuf[bytecount] = c;
+  bytecount++;
+  if(bytecount > 20){
+    for(int i=0;i<20;i++)
+      rcvBuf[i] = rcvBuf[i+1];
+    bytecount--;
+  }
+  rcvBuf[20] = 0;
+  showOled(rcvBuf);
+}
+
+
+
 void setup() 
 {
   Serial.begin(115200);
@@ -82,6 +128,16 @@ void setup()
   Serial.println(port);
   digitalWrite(2, HIGH);  // Turn the LED off 
 
+  Wire.begin(OLED_SDA, OLED_SCL);
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    Serial.println("Failed to initialize the dispaly");
+    for (;;);
+  }
+  sprintf(rcvBuf,"Host ");
+  showOled(rcvBuf);
+  delay(2000);
+  Serial.println("Display initialized");
+
   String s = WiFi.localIP().toString()+String("\r");
   findMorse(s,tbit);
   delay(1000);   
@@ -96,6 +152,9 @@ void loop()
     if(client.connected())
     {
       Serial.println("Client Connected");
+      for(int i=0;i<sizeof(rcvBuf);i++)
+        rcvBuf[i] = '\0';
+      bytecount = 0;
       char* speed = "";
       switch (tbit) {
         case 240:
@@ -211,10 +270,10 @@ void playmorse(String x, int tbit) {
   int c;
   for(int i=0;i<x.length();i++) {
     c = (int)(x.charAt(i) - 48)*tbit; 
-    tone(4,nota);      // suono su io4
+    tone(tonePin,nota);     // suono su io14
     digitalWrite(2, LOW);
     delay(c);
-    noTone(4);        // cessa suono su io4
+    noTone(tonePin);        // cessa suono su io14
     digitalWrite(2, HIGH);
     delay(tbit*spchr);  // ritardo spazio fra punti e linee
   }
@@ -227,6 +286,7 @@ void findMorse (String s, int tbit) {
   int j;
   while(s.charAt(i) != '\r') {
       if(s.charAt(i) == ' ') {
+         showMorseData(' ');
          delay(4*tbit*spchr);    // se blank spazia ritardo fra parole
       }
       else {
@@ -236,8 +296,10 @@ void findMorse (String s, int tbit) {
          }
          if(j < sizeof(alfanum)) {
            playmorse(codes[j],tbit);
+           showMorseData(s.charAt(i));
          }
          else {
+           showMorseData(' ');
            delay(4*tbit*spchr); // carattere non previsto, trattalo come spazio
          }
      }

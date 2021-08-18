@@ -3,9 +3,9 @@
 ### Brief description
 In view of beginning to operate in HF via QRP transmitter using CW, rather than buying a cw key or paddle I thought it was worthwhile to build a cw keyer based on 8266-12 microcontroller hosting a TCP server to receive data to be converted / transmitted from a TCP client such as Putty connected "raw telnet" running on PC. 
 
-The keyer would receive input data from PC, it would convert those in morse code to drive a passive buzzer tone at 800Hz to make audible codes driving also a relais or transistor wired to the transmitter's cw key input.
+The keyer would receive input data from PC, it would convert those in morse code to drive a passive buzzer tone at 800Hz to make audible codes driving also a relais or transistor wired to the transmitter's cw key input. An Oled-0.92" display is provided to display the characters being played by the buzzer to help the operator to familiarize with the morse code.
 
-In addition this keyer can be used to exercise own morse receiving ability thanks to the audible tones supplied by a passive buzzer directly connected to PIO D4 on ESP12e.
+In addition to the usage with an actual transmitter, this keyer can be used to exercise own morse receiving ability thanks to the audible tones supplied by a passive buzzer directly connected to PIO D5 (PIO 14) on ESP12e.
 
 The transmit speed can be set at various speed such as 5,10,15,20,25,30 WPM. The default speed is set at 15WPM and can be dynamically changed via a simple 5wpm / 10wpm / 20wpm etc. message sent from connected client. I chose to use the home WiFi network to support the connection in place of bluetooth since not all home PC have integrated bluetooth and bluetooth on ESP controllers is there only on ESP32 and I wanted to use a less expensive chip such as ESP12 or ESP3.
 
