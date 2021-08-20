@@ -59,6 +59,7 @@ String codes[] = {String("13"),String("3111"),String("3131"),String("311"),Strin
                   String("331133"),String("31131"),String("31113"),String("113311"),
                   String("333111"),String("313131"),String("311113"),String("13131"),
                   String("131131")};
+float voltage;
 char inbuf[2048];
 char rcvBuf[32] = {0};
 int bytecount = 5;
@@ -142,6 +143,18 @@ void setup()
 
   String s = WiFi.localIP().toString()+String("\r");
   findMorse(s,tbit);
+
+  voltage = ESP.getVcc();
+  delay(1000); 
+  voltage = voltage/1024.0;  //volt  
+  voltage = voltage * 1.127; // correction for esp-12
+  voltage = round(100*voltage)/100;
+  char bf[10] = {0};
+  sprintf(bf," Vb: %0.2f",voltage);
+  for(int i=0;i<9;i++)
+    showMorseData(bf[i]);
+  Serial.print("Voltage:");
+  Serial.println(voltage);
   delay(1000);   
 }
 
@@ -178,12 +191,6 @@ void loop()
           speed = "30wpm";
           break;
       }
-      float voltage = ESP.getVcc();
-      voltage = voltage/1024.0; //volt  
-      voltage = voltage * 1.146;  // correction for esp-12
-      voltage = round(100*voltage)/100;
-      Serial.print("Voltage:");
-      Serial.println(voltage);
       char buf[80];
       sprintf(buf,"Velocità morse %s nota at %dHz Livello batteria: %.2f",speed,nota,voltage);
       client.write(buf);
