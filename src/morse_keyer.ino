@@ -16,6 +16,8 @@
 #define OLED_SCL 5
 Adafruit_SSD1306 display(128, 32, &Wire, -1);
 
+ADC_MODE(ADC_VCC);  // Set ADC for read Vcc
+
 int port = 8888;  //Port number
 WiFiServer server(port);
 
@@ -176,8 +178,14 @@ void loop()
           speed = "30wpm";
           break;
       }
+      float voltage = ESP.getVcc();
+      voltage = voltage/1024.0; //volt  
+      voltage = voltage * 1.146;  // correction for esp-12
+      voltage = round(100*voltage)/100;
+      Serial.print("Voltage:");
+      Serial.println(voltage);
       char buf[80];
-      sprintf(buf,"Velocità morse %s nota at %dHz.",speed,nota);
+      sprintf(buf,"Velocità morse %s nota at %dHz Livello batteria: %.2f",speed,nota,voltage);
       client.write(buf);
     }
     
