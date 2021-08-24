@@ -99,7 +99,13 @@ void showMorseData(char c) {
   showOled(rcvBuf);
 }
 
-
+void getVoltage(){
+  voltage = ESP.getVcc();
+  delay(500); 
+  voltage = voltage/1024.0;  //volt  
+  voltage = voltage * 1.127; // correction for esp-12
+  voltage = round(100*voltage)/100;  
+}
 
 void setup() 
 {
@@ -144,11 +150,7 @@ void setup()
   String s = WiFi.localIP().toString()+String("\r");
   findMorse(s,tbit);
 
-  voltage = ESP.getVcc();
-  delay(1000); 
-  voltage = voltage/1024.0;  //volt  
-  voltage = voltage * 1.127; // correction for esp-12
-  voltage = round(100*voltage)/100;
+  getVoltage();
   char bf[10] = {0};
   sprintf(bf," Vb: %0.2f",voltage);
   for(int i=0;i<9;i++)
@@ -273,6 +275,12 @@ void loop()
         client.write("Ack\r\n");
         datin = false;
         Serial.println("Ack");
+        getVoltage();
+        char bf[5] = {0};
+        sprintf(bf,"%0.2f",voltage);
+        Serial.print("Vbatt: ");
+        Serial.println(bf);
+        client.write(bf);
       }
     }
     client.stop();
