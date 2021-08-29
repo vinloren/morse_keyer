@@ -21,9 +21,16 @@ ADC_MODE(ADC_VCC);  // Set ADC for read Vcc
 int port = 8888;  //Port number
 WiFiServer server(port);
 
+const char* APssid     = "ESP12_AP";
+IPAddress local_IP(192,168,4,1);
+IPAddress gateway(192,168,4,9);
+IPAddress subnet(255,255,255,0);
+//const char* password = "none";
+
 //Server connect to WiFi Network
 const char *ssid = "TIM-30772510";  //Enter your wifi SSID
 const char *password = "Vin41s65!";  //Enter your wifi Password
+bool LANWIFI = false;
 
 bool datin = false;
 String wpm5  = "5WPM\r\n";
@@ -107,34 +114,36 @@ void getVoltage(){
   voltage = round(100*voltage)/100;  
 }
 
-void setup() 
-{
-  Serial.begin(115200);
-  pinMode(2, OUTPUT);
-  Serial.println();
-
+bool connectWiFi() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password); //Connect to wifi
  
   // Wait for connection  
   Serial.println("Connecting to Wifi");
+  int i = 0;
   while (WiFi.status() != WL_CONNECTED) {   
     delay(500);
     Serial.print(".");
     delay(500);
+    i++;
+    if(i > 19)
+      break;
   }
-
+  if(i > 19)
+    return false;
   Serial.println("");
   Serial.print("Connected to ");
   Serial.println(ssid);
 
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());  
-  server.begin();
-  Serial.print("Open Telnet and connect to IP:");
-  Serial.print(WiFi.localIP());
-  Serial.print(" on port ");
-  Serial.println(port);
+  return true;
+}
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(2, OUTPUT);
+  Serial.println();
   digitalWrite(2, HIGH);  // Turn the LED off 
 
   Wire.begin(OLED_SDA, OLED_SCL);
@@ -142,22 +151,53 @@ void setup()
     Serial.println("Failed to initialize the dispaly");
     for (;;);
   }
-  sprintf(rcvBuf,"Host ");
-  showOled(rcvBuf);
-  delay(2000);
   Serial.println("Display initialized");
+  LANWIFI = connectWiFi();
+  
+  if(LANWIFI) {
+    server.begin();
+    Serial.print("Open Telnet and connect to IP:");
+    Serial.print(WiFi.localIP());
+    Serial.print(" on port ");
+    Serial.println(port);
+    sprintf(rcvBuf,"Host ");
+    showOled(rcvBuf);
+    delay(2000);
+    
+    String s = WiFi.localIP().toString()+String("\r");
+    findMorse(s,tbit);
 
-  String s = WiFi.localIP().toString()+String("\r");
-  findMorse(s,tbit);
+    getVoltage();
+    char bf[10] = {0};
+    sprintf(bf," Vb: %0.2f",voltage);
+    for(int i=0;i<9;i++)
+      showMorseData(bf[i]);
+    Serial.print("Voltage:");
+    Serial.println(voltage);
+    delay(1000);  
+  }
+  else {
+    Serial.println("No local WiFi router, setting ESP12_AP");
+    Serial.println(WiFi.softAPConfig(local_IP, gateway, subnet) ? "ESP12_AP" : "Failed!");
 
-  getVoltage();
-  char bf[10] = {0};
-  sprintf(bf," Vb: %0.2f",voltage);
-  for(int i=0;i<9;i++)
-    showMorseData(bf[i]);
-  Serial.print("Voltage:");
-  Serial.println(voltage);
-  delay(1000);   
+    Serial.print("Setting soft-AP ... ");
+    Serial.println(WiFi.softAP(APssid ? "ESP12_AP" : "Failed!"));
+
+    Serial.print("Soft-AP IP address = ");
+    Serial.println(WiFi.softAPIP()); 
+    sprintf(rcvBuf,"AP %d.%d.%d.%d",local_IP[0],local_IP[1],local_IP[2],local_IP[3]);
+    showOled(rcvBuf);
+    while(WiFi.softAPgetStationNum() < 1) {
+      delay(2000);
+      Serial.println("No station connected to Soft-AP");
+    }
+    getVoltage();
+    char bf[32] = {0};
+    sprintf(bf," Vb: %0.2f              ",voltage);
+    showOled(bf);
+    server.begin();
+    delay(2000);
+  }
 }
 
 
