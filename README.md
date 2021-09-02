@@ -19,10 +19,16 @@ The time of the dah is 3 times of the dit, the separation time between dit and/o
 
 
 ### How the morse keyer works
-If a local WiFi router is not there, or the WiFi configuration in the Arduino sketch does not comply with the available WiFi router, then the sketch switches to AP mode (ESP12_AP is the ssid name) on IP 192.168.4.1 waiting the PC WiFi to connect to it. The AP IP address is shown on the oled display and as the PC is connected then the current battery voltage of the keyer device is displayed. This indicates that the companion python morse_trainer application can be started connecting the AP IP.
+#### WIFI_STA mode
+The communication between companion python PC application and ESP12_morse_keyer is aimed to WIFI_STA mode, that means a local WiFi router should be available whose ssid and password are configured in the ESP12 sketch. If a local WiFi router is not there, or the WiFi configuration in the Arduino sketch does not comply with the available WiFi router, then the sketch switches to AP mode (ESP12_AP is the ssid name) on IP 192.168.4.1 waiting the PC WiFi to connect to it. The AP IP address is shown on the oled display and as the PC is connected then the current battery voltage of the keyer device is displayed. This indicates that the companion python morse_trainer application can be started connecting the AP IP.
+
+#### WIFI_AP mode
+While the connection is active in this mode, then the local WiFi router can be set without recompiling the sketch but just sending the string: ^^yourssid yourpassword then these values are stored in the ESP12 flash memory and all eventual new boots will connect the router nicely.
+The above string to configure the local WiFi router works any time the ESP12 is connected to the companion application: it works either in AP mode or STA mode.
 
 If the local WiFi router is on and the configuration in the sketch complies with it, then the Host IP address assigned by the router appears on the display and is morse played at 15wpm speed to inform the operator to place the correct IP destination address in the companion python application to connect the morse_keyer device. The current device's battery voltage value is then appended to the oled display.
 
+#### Connection port
 The connection port is 8888 but obviously can be changed in the sketch as we like. After the IP code is morse played or the PC has connected the ESP12_AP in case no local WiFi is available, the sketch enters the loop section where the TCP server is listening for connections. As the connection is made, a welcome message is sent to the client and from that moment on the client can send command messages (i.e.: 20wpm to change the speed) or else any other message that will morse played on the buzzer driving in the meantime a relais or transistor whose output is wired to transmitter's cw key input. At the moment the relais / transistor drive is not programmed in the sketch but it is easy to be done when needed as soon as I get the transmitter built / purchased.
 
 ### ESP12 morse keyer schematic

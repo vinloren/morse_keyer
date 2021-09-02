@@ -9,6 +9,7 @@
 
 #include <ESP8266WiFi.h>
 #include <Wire.h>
+#include <EEPROM.h> 
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
@@ -21,17 +22,17 @@ ADC_MODE(ADC_VCC);  // Set ADC for read Vcc
 int port = 8888;  //Port number
 WiFiServer server(port);
 
+int ssid_psw = 50;
 const char* APssid     = "ESP12_AP";
 IPAddress local_IP(192,168,4,1);
 IPAddress gateway(192,168,4,9);
 IPAddress subnet(255,255,255,0);
-//const char* password = "none";
 
 //Server connect to WiFi Network
-const char *ssid = "TIM-30772510";  //Enter your wifi SSID
-const char *password = "Vin41s65!";  //Enter your wifi Password
+String Ssid = "yourssid";   
+String passwd = "yourpsw";  
 bool LANWIFI = false;
-
+bool APMODE = false;
 bool datin = false;
 String wpm5  = "5WPM\r\n";
 String wpm10 = "10WPM\r\n";
@@ -115,12 +116,38 @@ void getVoltage(){
 }
 
 bool connectWiFi() {
+  int i = 0;
+  char c;
   WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password); //Connect to wifi
+  int firstssid = EEPROM.read(ssid_psw);
+  Serial.print("First ssid byte: ");
+  Serial.println(firstssid);  
+  if(firstssid != '\0') {
+    Ssid = "";
+    while(EEPROM.read(ssid_psw+i) != '\0') {
+      c = EEPROM.read(ssid_psw+i);
+      Ssid += String(c);
+      //Serial.println(Ssid);
+      i++;
+    }
+    i++;
+    passwd = "";
+    while(EEPROM.read(ssid_psw+i) != '\0') {
+      c = EEPROM.read(ssid_psw+i);
+      passwd += String(c);
+      //Serial.println(passwd);
+      i++;
+    }
+  }
+  Serial.print("Connecting ");
+  Serial.println(Ssid);
+  Serial.print("Password: ");
+  Serial.println(passwd);
+  WiFi.begin(Ssid, passwd); 
  
   // Wait for connection  
   Serial.println("Connecting to Wifi");
-  int i = 0;
+  i = 0;
   while (WiFi.status() != WL_CONNECTED) {   
     delay(500);
     Serial.print(".");
@@ -129,11 +156,14 @@ bool connectWiFi() {
     if(i > 19)
       break;
   }
-  if(i > 19)
+  Serial.println("");
+  if(i > 19){
+    WiFi.mode(WIFI_AP);
     return false;
+  }
   Serial.println("");
   Serial.print("Connected to ");
-  Serial.println(ssid);
+  Serial.println(Ssid);
 
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());  
@@ -145,6 +175,9 @@ void setup() {
   pinMode(2, OUTPUT);
   Serial.println();
   digitalWrite(2, HIGH);  // Turn the LED off 
+
+  EEPROM.begin(512);
+  delay(10);
 
   Wire.begin(OLED_SDA, OLED_SCL);
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
@@ -195,6 +228,7 @@ void setup() {
     char bf[32] = {0};
     sprintf(bf," Vb: %0.2f              ",voltage);
     showOled(bf);
+    APMODE = true;
     server.begin();
     delay(2000);
   }
@@ -234,11 +268,19 @@ void loop()
           break;
       }
       char buf[80];
-      sprintf(buf,"Velocità morse %s nota at %dHz Livello batteria: %.2f",speed,nota,voltage);
+      sprintf(buf,"Velocità morse %s nota at %dHz Livello batteria: %.2f\r\n",speed,nota,voltage);
       client.write(buf);
+      if(APMODE) {
+        sprintf(buf,"Per configurare ssid/psw WiFi inviare ^^nomessid password da Transmit window.");
+        delay(200);
+        client.write(buf);
+      }
     }
     
     while(client.connected()){      
+      String newSSID = "";
+      String newPSW = "";
+      
       int i,j;
       for(i=0;i<2048;i++)
         inbuf[i] = '\0';
@@ -250,77 +292,120 @@ void loop()
       }
       if(datin) {
         String s = String(inbuf);
-        s.toUpperCase();
-        Serial.println(s);
-        if(wpm5.compareTo(s) == 0) {
-          tbit = 240;
-          Serial.println("Set speed 5wpm");  
-        }
-        else if(wpm10.compareTo(s) == 0) {
-          tbit = 120;
-          Serial.println("Set speed 10wpm");  
-        }
-        else if(wpm15.compareTo(s) == 0) {
-          tbit = 80;
-          Serial.println("Set speed 15wpm");  
-        }
-        else if(wpm20.compareTo(s) == 0) {
-          tbit = 60;
-          Serial.println("Set speed 20wpm");  
-        }
-        else if(wpm25.compareTo(s) == 0) {
-          tbit = 48;
-          Serial.println("Set speed 25wpm");  
-        }
-        else if(wpm30.compareTo(s) == 0) {
-          tbit = 40;
-          Serial.println("Set speed 30wpm");  
-        }
-        else if(t400.compareTo(s) == 0) {
-          nota = 400;
-          Serial.println("Set tone at 400Hz");  
-        }
-        else if(t500.compareTo(s) == 0) {
-          nota = 500;
-          Serial.println("Set tone at 500Hz");  
-        }
-        else if(t600.compareTo(s) == 0) {
-          nota = 600;
-          Serial.println("Set tone at 600Hz");  
-        }
-        else if(t700.compareTo(s) == 0) {
-          nota = 700;
-          Serial.println("Set tone at 700Hz");  
-        }
-        else if(t800.compareTo(s) == 0) {
-          nota = 800;
-          Serial.println("Set tone at 800Hz");  
-        }
-        else if(t900.compareTo(s) == 0) {
-          nota = 900;
-          Serial.println("Set tone at 900Hz");  
-        }
-        else if(sp1.compareTo(s) == 0) {
-          spchr = 1;  
-          Serial.println("Singolo spazio dit/dah");   
-        }
-        else if(sp2.compareTo(s) == 0) {
-          spchr = 2;  
-          Serial.println("Doppio spazio dit/dah");   
+        if(s.charAt(0) == '^' && s.charAt(1) == '^') {
+          Serial.println("Setting ssid / psw.");
+          s += String("\r\n");
+          j = 2;
+          while(s.charAt(j) != ' ') {
+            newSSID += String(s.charAt(j++)); 
+            if(j > 20)
+              break;
+          }
+          if(j < 20) {
+            j++;
+            while(s.charAt(j) != '\r') {
+              newPSW += String(s.charAt(j++));
+              if(j > 30)
+                break;
+            }
+            for(j=0;j<sizeof(newSSID);j++) {
+              EEPROM.write(ssid_psw+j,newSSID.charAt(j));
+              delay(100);
+              EEPROM.commit();
+            }
+            Serial.print("newSSID: ");
+            Serial.println(newSSID);
+            EEPROM.write(ssid_psw+j,'\0');
+            j++;
+            delay(100);
+            EEPROM.commit();
+            for(i=0;i<sizeof(newPSW);i++) {
+              EEPROM.write(ssid_psw+j+i,newPSW.charAt(i));
+              delay(100);
+              EEPROM.commit(); 
+            }
+            i++;
+            Serial.print("newPSW: ");
+            Serial.println(newPSW);
+            EEPROM.write(ssid_psw+j+i,'\0');
+            delay(100);
+            EEPROM.commit(); 
+            client.write("ACK\r\n");
+          }
         }
         else {
-          Serial.println("Vado a trasmettere in morse..");
-          findMorse(s, tbit);
+          s.toUpperCase();
+          Serial.println(s);
+          if(wpm5.compareTo(s) == 0) {
+            tbit = 240;
+            Serial.println("Set speed 5wpm");  
+          }
+          else if(wpm10.compareTo(s) == 0) {
+            tbit = 120;
+            Serial.println("Set speed 10wpm");  
+          }
+          else if(wpm15.compareTo(s) == 0) {
+            tbit = 80;
+            Serial.println("Set speed 15wpm");  
+          }
+          else if(wpm20.compareTo(s) == 0) {
+            tbit = 60;
+            Serial.println("Set speed 20wpm");  
+          }
+          else if(wpm25.compareTo(s) == 0) {
+            tbit = 48;
+            Serial.println("Set speed 25wpm");  
+          }
+          else if(wpm30.compareTo(s) == 0) {
+            tbit = 40;
+            Serial.println("Set speed 30wpm");  
+          }
+          else if(t400.compareTo(s) == 0) {
+            nota = 400;
+            Serial.println("Set tone at 400Hz");  
+          }
+          else if(t500.compareTo(s) == 0) {
+            nota = 500;
+            Serial.println("Set tone at 500Hz");  
+          }
+          else if(t600.compareTo(s) == 0) {
+            nota = 600;
+            Serial.println("Set tone at 600Hz");  
+          }
+          else if(t700.compareTo(s) == 0) {
+            nota = 700;
+            Serial.println("Set tone at 700Hz");  
+          }
+          else if(t800.compareTo(s) == 0) {
+            nota = 800;
+            Serial.println("Set tone at 800Hz");  
+          }
+          else if(t900.compareTo(s) == 0) {
+            nota = 900;
+            Serial.println("Set tone at 900Hz");  
+          }
+          else if(sp1.compareTo(s) == 0) {
+            spchr = 1;  
+            Serial.println("Singolo spazio dit/dah");   
+          }
+          else if(sp2.compareTo(s) == 0) {
+            spchr = 2;  
+            Serial.println("Doppio spazio dit/dah");   
+          }
+          else {
+            Serial.println("Vado a trasmettere in morse..");
+            findMorse(s, tbit);
+          }
+          client.write("Ack\r\n");
+          Serial.println("Ack");
+          getVoltage();
+          char bf[5] = {0};
+          sprintf(bf,"%0.2f",voltage);
+          Serial.print("Vbatt: ");
+          Serial.println(bf);
+          client.write(bf);
         }
-        client.write("Ack\r\n");
         datin = false;
-        Serial.println("Ack");
-        getVoltage();
-        char bf[5] = {0};
-        sprintf(bf,"%0.2f",voltage);
-        Serial.print("Vbatt: ");
-        Serial.println(bf);
-        client.write(bf);
       }
     }
     client.stop();
